@@ -1,6 +1,7 @@
 package com.example.rutasranch.map
 
 import android.content.Context
+import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,6 +14,7 @@ import org.json.JSONObject
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
+import java.util.*
 
 class MapViewModel : ViewModel() {
 
@@ -22,8 +24,7 @@ class MapViewModel : ViewModel() {
     private val _routePoints = MutableLiveData<List<GeoPoint>>()
     val routePoints: LiveData<List<GeoPoint>> = _routePoints
 
-    // Coordenadas reales de tu casa
-    private val homeLocation = GeoPoint(20.083833, -101.442056)
+    private var currentDestination: GeoPoint = GeoPoint(20.083833, -101.442056)
 
     fun setMapView(map: MapView, context: Context) {
         this.mapView = map
@@ -34,28 +35,40 @@ class MapViewModel : ViewModel() {
         getUserLocationAndRoute(context)
     }
 
+    fun searchAndRouteTo(context: Context, address: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val geocoder = Geocoder(context, Locale.getDefault())
+                val results = geocoder.getFromLocationName(address, 1)
+                if (!results.isNullOrEmpty()) {
+                    val location = results[0]
+                    currentDestination = GeoPoint(location.latitude, location.longitude)
+                    getUserLocationAndRoute(context)
+                } else {
+                    Log.e("BUSQUEDA", "No se encontró la dirección: $address")
+                }
+            } catch (e: Exception) {
+                Log.e("BUSQUEDA", "Error en geocoder: ${e.message}")
+            }
+        }
+    }
+
     private fun getUserLocationAndRoute(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val locationService = LocationService(context)
             val location = locationService.getCurrentLocation()
 
-            if (location != null) {
-                Log.d("GPS", "Ubicación actual: ${location.latitude}, ${location.longitude}")
-            } else {
-                Log.e("GPS", "No se pudo obtener la ubicación, usando fallback")
-            }
-
             val startLocation = if (location != null && location.latitude != 0.0 && location.longitude != 0.0) {
                 GeoPoint(location.latitude, location.longitude)
             } else {
-                GeoPoint(19.427025, -99.167665) // Fallback a CDMX
+                GeoPoint(19.427025, -99.167665) // fallback
             }
 
             withContext(Dispatchers.Main) {
                 mapView?.controller?.setCenter(startLocation)
             }
 
-            fetchRoute(startLocation, homeLocation)
+            fetchRoute(startLocation, currentDestination)
         }
     }
 

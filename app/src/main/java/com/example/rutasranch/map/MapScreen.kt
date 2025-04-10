@@ -19,6 +19,7 @@ import org.osmdroid.views.MapView
 fun MapScreen(context: Context, mapViewModel: MapViewModel = viewModel()) {
     val routePoints by mapViewModel.routePoints.observeAsState()
     var currentAddress by remember { mutableStateOf("Ubicación no disponible") }
+    var destinationInput by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -39,7 +40,27 @@ fun MapScreen(context: Context, mapViewModel: MapViewModel = viewModel()) {
             })
         }
 
-        // Botón
+        // Buscar dirección
+        OutlinedTextField(
+            value = destinationInput,
+            onValueChange = { destinationInput = it },
+            label = { Text("Buscar dirección") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
+
+        Button(
+            onClick = {
+                mapViewModel.searchAndRouteTo(context, destinationInput)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text("Buscar dirección")
+        }
+
         Button(
             onClick = {
                 mapViewModel.refreshLocation(context)
@@ -56,9 +77,9 @@ fun MapScreen(context: Context, mapViewModel: MapViewModel = viewModel()) {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
-            Text("Actualizar Ubicación")
+            Text("Actualizar ubicación")
         }
 
         Text(
