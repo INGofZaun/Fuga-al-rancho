@@ -78,4 +78,9 @@ dependencies {
 
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
 
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
+
+
 }
